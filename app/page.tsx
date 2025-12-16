@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const EVENT_DATE = new Date("2026-01-31T19:00:00");
 
@@ -28,7 +29,13 @@ const Page = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center px-4 overflow-hidden">
+    <main className="min-h-screen relative bg-gradient-to-br from-black via-gray-800 via-35% via-violet-800/100 to-black flex items-center justify-center px-4 overflow-hidden">
+      <div
+        className="absolute -bottom-18 -left-1/3 h-16 w-3/2"
+        style={{
+          boxShadow: "0 -40px 40px rgba(0,0,0,1)",
+        }}
+      />
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -43,6 +50,15 @@ const Page = () => {
         >
           Coming Soon
         </motion.p>
+        <div className="flex justify-center items-center mb-4">
+          <Image
+            src="/hdwebsoft-logo-blue-new.svg"
+            alt="HDWebsoft Logo"
+            width={200}
+            height={40}
+            priority
+          />
+        </div>
 
         <motion.h1
           initial={{ opacity: 0, scale: 0.95 }}
@@ -50,7 +66,7 @@ const Page = () => {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="text-4xl md:text-6xl font-extrabold mb-6"
         >
-          End Year <span className="text-indigo-500">2025</span> Event
+          Year End Party <span className="text-indigo-500">2025</span>
         </motion.h1>
 
         <motion.p
