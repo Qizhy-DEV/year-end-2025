@@ -29,7 +29,7 @@ const Page = () => {
   }, []);
 
   return (
-    <main className="min-h-screen relative bg-gradient-to-br from-black via-gray-800 via-35% via-violet-800/100 to-black flex items-center justify-center px-4 overflow-hidden">
+    <main className="min-h-screen relative bg-gradient-to-br from-black via-[#3432c7] via-40% via-[#3432c7]/100 to-black flex items-center justify-center px-4 overflow-hidden">
       <div
         className="absolute -bottom-18 -left-1/3 h-16 w-3/2"
         style={{
@@ -46,7 +46,7 @@ const Page = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="uppercase tracking-widest text-sm text-gray-400 mb-4"
+          className="uppercase tracking-widest text-sm text-[#e2c086] font-bold mb-4"
         >
           Coming Soon
         </motion.p>
@@ -66,7 +66,7 @@ const Page = () => {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="text-4xl md:text-6xl font-extrabold mb-6"
         >
-          Year End Party <span className="text-indigo-500">2025</span>
+          Year End Party <span className="text-[#e2c086]">2025</span>
         </motion.h1>
 
         <motion.p
@@ -75,8 +75,8 @@ const Page = () => {
           transition={{ delay: 0.6 }}
           className="text-gray-300 text-lg mb-10"
         >
-          We’re preparing something special to close 2025 with unforgettable
-          moments. Stay tuned!
+          Something special is coming to wrap up 2025 in an unforgettable way.
+          Stay tuned!
         </motion.p>
 
         {timeLeft ? (
