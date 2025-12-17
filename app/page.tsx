@@ -52,10 +52,10 @@ const Page = () => {
         </motion.p>
         <div className="flex justify-center items-center mb-4">
           <Image
-            src="/hdwebsoft-logo-blue-new.svg"
+            src="/hdwebsoft.png"
             alt="HDWebsoft Logo"
-            width={200}
-            height={40}
+            width={180}
+            height={35}
             priority
           />
         </div>
@@ -124,7 +124,7 @@ const Page = () => {
           transition={{ delay: 1 }}
           className="text-gray-500 text-sm"
         >
-          © 2025 HDWebsoft. All rights reserved.
+          © 2025 HDWEBSOFT. All rights reserved.
         </motion.footer>
       </motion.div>
     </main>
