@@ -37,11 +37,11 @@ const Main = () => {
         ))}
       </div>
       <LuckyMoneyModal
+        isLoading={true}
         isOpen={isModalResultOpen}
         onClose={() => setIsModalResultOpen(false)}
         amount={100000}
         luckyNumber={123456}
-        blessing="Chúc mừng bạn đã trúng thưởng 100000 đồng"
       />
     </div>
   );

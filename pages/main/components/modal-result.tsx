@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 interface LuckyMoneyModalProps {
@@ -8,45 +8,136 @@ interface LuckyMoneyModalProps {
   onClose: () => void;
   amount: number;
   luckyNumber: number;
-  blessing: string;
+  isLoading: boolean;
 }
 
 export function LuckyMoneyModal({
   isOpen,
   onClose,
   amount,
-  luckyNumber,
-  blessing,
+  isLoading,
+  luckyNumber: propLuckyNumber,
 }: LuckyMoneyModalProps) {
   const [displayAmount, setDisplayAmount] = useState(0);
+  const [displayLucky, setDisplayLucky] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
+  const amountTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const luckyTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const animationDoneRef = useRef(false);
 
+  // Hiệu ứng nhảy số cho cả số tiền và số may mắn (theo trạng thái isLoading)
   useEffect(() => {
-    if (isOpen) {
-      setIsAnimating(true);
-      setDisplayAmount(0);
+    if (!isOpen) return;
 
-      // Count-up animation for the amount
-      const duration = 1200; // 1.2 seconds
-      const steps = 60;
-      const increment = amount / steps;
-      let currentStep = 0;
+    setIsAnimating(true);
+    setDisplayAmount(0);
+    setDisplayLucky(0);
+    animationDoneRef.current = false;
 
-      const timer = setInterval(() => {
-        currentStep++;
-        if (currentStep >= steps) {
-          setDisplayAmount(amount);
-          clearInterval(timer);
-        } else {
-          setDisplayAmount(Math.floor(increment * currentStep));
-        }
-      }, duration / steps);
-
-      return () => clearInterval(timer);
+    if (amountTimerRef.current) {
+      clearInterval(amountTimerRef.current);
+      amountTimerRef.current = null;
     }
-  }, [isOpen, amount]);
+    if (luckyTimerRef.current) {
+      clearInterval(luckyTimerRef.current);
+      luckyTimerRef.current = null;
+    }
+
+    if (isLoading) {
+      amountTimerRef.current = setInterval(() => {
+        setDisplayAmount(Math.floor(Math.random() * 1000000));
+      }, 32);
+      luckyTimerRef.current = setInterval(() => {
+        setDisplayLucky(Math.floor(Math.random() * 1000));
+      }, 42);
+
+      return () => {
+        if (amountTimerRef.current) {
+          clearInterval(amountTimerRef.current);
+          amountTimerRef.current = null;
+        }
+        if (luckyTimerRef.current) {
+          clearInterval(luckyTimerRef.current);
+          luckyTimerRef.current = null;
+        }
+      };
+    }
+
+    // Xử lý hiệu ứng số tiền tăng dần và số may mắn tăng dần khi không loading
+    const duration = 1200; // 1.2 seconds
+    const steps = 60;
+    const incrementAmount = amount / steps;
+    let currentStepAmount = 0;
+
+    const incrementLucky = Math.max(
+      1,
+      Math.floor((propLuckyNumber || 0) / steps)
+    );
+    let currentLucky = 0;
+
+    amountTimerRef.current = setInterval(() => {
+      currentStepAmount++;
+      if (currentStepAmount >= steps) {
+        setDisplayAmount(amount);
+        clearInterval(amountTimerRef.current!);
+        amountTimerRef.current = null;
+        animationDoneRef.current = true;
+      } else {
+        setDisplayAmount(Math.floor(incrementAmount * currentStepAmount));
+      }
+    }, duration / steps);
+
+    luckyTimerRef.current = setInterval(() => {
+      if (currentLucky + incrementLucky >= sanitizeLucky(propLuckyNumber)) {
+        setDisplayLucky(sanitizeLucky(propLuckyNumber));
+        clearInterval(luckyTimerRef.current!);
+        luckyTimerRef.current = null;
+      } else {
+        currentLucky += incrementLucky;
+        setDisplayLucky(currentLucky);
+      }
+    }, duration / steps);
+
+    return () => {
+      if (amountTimerRef.current) {
+        clearInterval(amountTimerRef.current);
+        amountTimerRef.current = null;
+      }
+      if (luckyTimerRef.current) {
+        clearInterval(luckyTimerRef.current);
+        luckyTimerRef.current = null;
+      }
+    };
+  }, [isOpen, amount, isLoading, propLuckyNumber]);
+
+  // Theo dõi trạng thái isLoading, khi hết loading thì set về giá trị amount và luckyNumber thực tế
+  useEffect(() => {
+    if (isOpen && !isLoading) {
+      if (amountTimerRef.current) {
+        clearInterval(amountTimerRef.current);
+        amountTimerRef.current = null;
+      }
+      if (luckyTimerRef.current) {
+        clearInterval(luckyTimerRef.current);
+        luckyTimerRef.current = null;
+      }
+      setDisplayAmount(amount);
+      setDisplayLucky(sanitizeLucky(propLuckyNumber));
+      animationDoneRef.current = true;
+    }
+  }, [isLoading, isOpen, amount, propLuckyNumber]);
 
   if (!isOpen) return null;
+
+  function sanitizeLucky(lucky: number) {
+    // Always bound the lucky number between 0 and 999
+    if (typeof lucky !== "number" || isNaN(lucky)) return 0;
+    return Math.max(0, Math.min(999, Math.floor(lucky)));
+  }
+  function padLucky(lucky: number) {
+    // Always show as 3 digits
+    return sanitizeLucky(lucky).toString().padStart(3, "0");
+  }
 
   return (
     <>
@@ -99,7 +190,16 @@ export function LuckyMoneyModal({
               </p>
               <div className="relative inline-block">
                 <div className="text-6xl md:text-7xl font-bold text-tet-red drop-shadow-lg animate-scale-in">
-                  {displayAmount.toLocaleString("vi-VN")}
+                  <span
+                    className="overflow-hidden"
+                    style={{
+                      display: "inline-block",
+                      minWidth: "240px",
+                      textAlign: "right",
+                    }}
+                  >
+                    {displayAmount.toLocaleString("vi-VN")}
+                  </span>
                   <span className="text-4xl ml-2">₫</span>
                 </div>
                 {/* Shine effect */}
@@ -116,7 +216,7 @@ export function LuckyMoneyModal({
                 <div className="flex items-center justify-center gap-2">
                   <span className="text-xl">🍀</span>
                   <span className="text-4xl font-bold text-tet-red">
-                    {luckyNumber}
+                    {padLucky(displayLucky)}
                   </span>
                   <span className="text-xl">🍀</span>
                 </div>
@@ -126,7 +226,11 @@ export function LuckyMoneyModal({
             {/* Blessing Message */}
             <div className="text-center mb-8 animate-fade-in-up animation-delay-500">
               <p className="text-tet-text-primary text-lg font-medium leading-relaxed text-balance px-4">
-                {blessing}
+                {isLoading && amount > 0
+                  ? "Đang xử lý..."
+                  : "Chúc mừng bạn đã trúng thưởng " +
+                    amount.toLocaleString("vi-VN") +
+                    " đồng"}
               </p>
             </div>
 
