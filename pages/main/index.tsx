@@ -1,5 +1,5 @@
 import { useState } from "react";
-import LuckyMoney from "./components/lucky-money";
+import LuckyMoney from "../../components/lucky-money";
 import { luckyMoneyData } from "./data/lucky-money";
 import { LuckyMoneyModal } from "../../components/modal-result";
 import { useAuth } from "@/context/auth-context";
