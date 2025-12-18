@@ -1,6 +1,7 @@
 export const getAuthData = () => {
-  const info = globalThis.localStorage.getItem("info");
+  if (typeof window === "undefined") return null;
 
+  const info = window.localStorage.getItem("info");
   return info ? JSON.parse(info) : null;
 };
 
