@@ -2,14 +2,29 @@ import { useState } from "react";
 import LuckyMoney from "./components/lucky-money";
 import { luckyMoneyData } from "./data/lucky-money";
 import { LuckyMoneyModal } from "./components/modal-result";
+import { useAuth } from "@/context/auth-context";
+import { useLuckyNumber } from "@/hooks/use-lucky-number";
 
 const Main = () => {
   const [curActiveIndex, setCurActiveIndex] = useState<number>(0);
   const [isModalResultOpen, setIsModalResultOpen] = useState<boolean>(false);
+  const { user } = useAuth();
+  const { mutateAsync: getLuckyNumber, isPending: isLoading } =
+    useLuckyNumber();
+  const [luckyNumber, setLuckyNumber] = useState<number>(0);
 
-  const handleClick = (index: number) => {
-    setCurActiveIndex(index);
-    setIsModalResultOpen(true);
+  const handleClick = async (index: number) => {
+    if (user) {
+      setCurActiveIndex(index);
+      setIsModalResultOpen(true);
+      const res = await getLuckyNumber({
+        username: user?.user_login,
+        password: user?.password,
+      });
+      if (res) {
+        setLuckyNumber(res.lucky);
+      }
+    }
   };
 
   return (
@@ -37,11 +52,10 @@ const Main = () => {
         ))}
       </div>
       <LuckyMoneyModal
-        isLoading={true}
+        isLoading={isLoading}
         isOpen={isModalResultOpen}
         onClose={() => setIsModalResultOpen(false)}
-        amount={100000}
-        luckyNumber={123456}
+        luckyNumber={luckyNumber}
       />
     </div>
   );

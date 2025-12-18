@@ -1,16 +1,30 @@
 import axiosClient from "@/core/axios";
 import { API_PATHS } from "./path";
 
-type LoginResponse = {
-  token: string;
+export type LoginResponse = {
+  success: boolean;
+  ID: number;
+  user_login: string;
+  display_name: string;
+  lucky: number;
 };
 
 type LuckyNumberResponse = {
-  luckyNumber: number;
+  lucky: number;
 };
 
-export const login = async (): Promise<LoginResponse> => {
-  return (await axiosClient.get<LoginResponse>(API_PATHS.login)).data;
+export const login = async (
+  username: string,
+  password: string
+): Promise<LoginResponse> => {
+  return (
+    await axiosClient.get<LoginResponse>(API_PATHS.login, {
+      params: {
+        user_name: username,
+        password,
+      },
+    })
+  ).data;
 };
 
 export const getLuckyNumber = async (
@@ -21,7 +35,7 @@ export const getLuckyNumber = async (
     API_PATHS.getLuckyNumber,
     {
       params: {
-        username,
+        user_name: username,
         password,
       },
     }

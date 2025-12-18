@@ -3,36 +3,28 @@
 import type React from "react";
 import { useState } from "react";
 import Image from "next/image";
-import { signToken } from "@/libs/token";
+import { useLogin } from "@/hooks/use-login";
+import { useAuth } from "@/context/auth-context";
 
 export default function Login() {
-  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const { loginUser } = useAuth();
 
-  const validateVietnameseName = (name: string) => {
-    // Check if name is empty
-    if (!name.trim()) {
-      setError("Vui lòng nhập họ và tên");
+  const { mutateAsync: login } = useLogin();
+
+  // Validate username must end with ".hd"
+  const validateUsername = (uname: string) => {
+    if (!uname.trim()) {
+      setError("Vui lòng nhập username");
       return false;
     }
-
-    // Check if first letter of each word is capitalized
-    const words = name.trim().split(/\s+/);
-    for (const word of words) {
-      if (word[0] !== word[0].toUpperCase()) {
-        setError("Phải viết hoa chữ cái đầu mỗi từ");
-        return false;
-      }
-    }
-
-    // Check if name has at least 2 words (họ và tên)
-    if (words.length < 2) {
-      setError("Vui lòng nhập đầy đủ họ và tên");
+    if (!uname.trim().endsWith(".hd")) {
+      setError("Username phải kết thúc bằng .hd");
       return false;
     }
-
     setError("");
     return true;
   };
@@ -42,22 +34,19 @@ export default function Login() {
       setPasswordError("Vui lòng nhập mật khẩu");
       return false;
     }
-    // You can add additional password rules here if needed
     setPasswordError("");
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validName = validateVietnameseName(fullName);
+    const validUsername = validateUsername(username);
     const validPassword = validatePassword(password);
 
-    if (validName && validPassword) {
-      localStorage.setItem("info", fullName);
-      localStorage.setItem("password", password);
-      console.log(signToken({ fullName, password }));
-      // router.push("/");
+    if (validUsername && validPassword) {
+      const res = await login({ username, password });
+      loginUser({ ...res, password });
     }
   };
 
@@ -101,26 +90,26 @@ export default function Login() {
               Chào Mừng <br /> Xuân Bính Ngọ 2026
             </h1>
             <p className="text-white/80 text-sm">
-              Nhập tên để nhận lì xì may mắn
+              Nhập username để nhận lì xì may mắn
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 mt-4">
             <div className="space-y-2">
               <label
-                htmlFor="fullName"
+                htmlFor="username"
                 className="block text-white font-medium text-sm"
               >
-                Họ và Tên
+                Username
               </label>
               <input
-                id="fullName"
+                id="username"
                 type="text"
-                value={fullName}
+                value={username}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFullName(e.target.value)
+                  setUsername(e.target.value)
                 }
-                placeholder="Ví dụ: Nguyễn Văn An"
+                placeholder="Ví dụ: nguyenvana.hd"
                 className="bg-white/20 px-4 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-white/50 rounded-xl h-12 text-base w-full transition-all outline-none hover:border-white/50 focus:ring-2 focus:ring-[#FFD700]/35"
                 autoComplete="off"
                 spellCheck={true}
@@ -170,10 +159,10 @@ export default function Login() {
             <div className="mt-6 pt-6 border-t border-white/20">
               <p className="text-white/60 text-xs leading-relaxed space-y-1">
                 <span className="block">
-                  📝 Phải nhập có dấu, viết hoa chữ đầu
+                  📝 Username phải kết thúc bằng <b>.hd</b>
                 </span>
                 <span className="block">
-                  🚫 Không được nhập tên của người khác
+                  🚫 Không được nhập username của người khác
                 </span>
                 <span className="block">🔒 Mật khẩu từ 1 ký tự trở lên</span>
               </p>
