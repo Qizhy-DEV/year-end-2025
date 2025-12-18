@@ -35,7 +35,6 @@ const ResultPage = () => {
           priority
         />
 
-        {/* Lucky number label */}
         <div className="text-center mb-2 mt-2">
           <p className="text-[#222] font-semibold text-md">
             Số may mắn của bạn
