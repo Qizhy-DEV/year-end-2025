@@ -2,13 +2,14 @@
 
 import type React from "react";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { signToken } from "@/libs/token";
 
 export default function Login() {
   const [fullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const router = useRouter();
+  const [passwordError, setPasswordError] = useState("");
 
   const validateVietnameseName = (name: string) => {
     // Check if name is empty
@@ -36,12 +37,27 @@ export default function Login() {
     return true;
   };
 
+  const validatePassword = (password: string) => {
+    if (!password) {
+      setPasswordError("Vui lòng nhập mật khẩu");
+      return false;
+    }
+    // You can add additional password rules here if needed
+    setPasswordError("");
+    return true;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (validateVietnameseName(fullName)) {
+    const validName = validateVietnameseName(fullName);
+    const validPassword = validatePassword(password);
+
+    if (validName && validPassword) {
       localStorage.setItem("info", fullName);
-      router.push("/");
+      localStorage.setItem("password", password);
+      console.log(signToken({ fullName, password }));
+      // router.push("/");
     }
   };
 
@@ -117,6 +133,33 @@ export default function Login() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="block text-white font-medium text-sm"
+              >
+                Mật khẩu
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
+                placeholder="Nhập mật khẩu"
+                className="bg-white/20 px-4 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-white/50 rounded-xl h-12 text-base w-full transition-all outline-none hover:border-white/50 focus:ring-2 focus:ring-[#FFD700]/35"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              {passwordError && (
+                <p className="text-red-300 text-sm flex items-center gap-1">
+                  <span>⚠️</span>
+                  {passwordError}
+                </p>
+              )}
+            </div>
+
             <button
               type="submit"
               className="w-full bg-[#e2c086] text-[#8B0000] font-bold text-lg h-12 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFD700]/80 active:scale-95"
@@ -132,6 +175,7 @@ export default function Login() {
                 <span className="block">
                   🚫 Không được nhập tên của người khác
                 </span>
+                <span className="block">🔒 Mật khẩu từ 1 ký tự trở lên</span>
               </p>
             </div>
           </form>
