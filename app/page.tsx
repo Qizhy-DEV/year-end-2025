@@ -2,10 +2,10 @@
 
 import { AuthProvider, useAuth } from "@/context/auth-context";
 import { queryClient } from "@/core/query-client";
-import ComingSoon from "@/pages/coming-soon";
-import Login from "@/pages/login";
-import Main from "@/pages/main";
-import ResultPage from "@/pages/result";
+import ComingSoon from "@/components/coming-soon";
+import Login from "@/components/login";
+import Main from "@/components/main";
+import ResultPage from "@/components/result";
 import { QueryClientProvider } from "@tanstack/react-query";
 
 const EVENT_DATE = new Date("2025-12-17T15:30:00");
