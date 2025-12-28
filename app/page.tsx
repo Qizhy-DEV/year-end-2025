@@ -1,24 +1,42 @@
 "use client";
 
-import ComingSoon from "@/pages/coming-soon";
-import Login from "@/pages/login";
-import Main from "@/pages/main";
+import { AuthProvider, useAuth } from "@/context/auth-context";
+import { queryClient } from "@/core/query-client";
+import ComingSoon from "@/components/coming-soon";
+import Login from "@/components/login";
+import Main from "@/components/main";
+import ResultPage from "@/components/result";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 const EVENT_DATE = new Date("2025-12-17T15:30:00");
 
-const Page = () => {
+const Content = () => {
   const shouldShowComingSoon = new Date() < EVENT_DATE;
-  const info = globalThis.localStorage.getItem("info");
+  const { user } = useAuth();
 
   if (shouldShowComingSoon) {
     return <ComingSoon />;
   }
 
-  if (!info) {
+  if (!user) {
     return <Login />;
   }
 
-  return <Main />;
+  if (user.lucky === 0) {
+    return <Main />;
+  }
+
+  return <ResultPage />;
 };
+
+function Page() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Content />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default Page;
