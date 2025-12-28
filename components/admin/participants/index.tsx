@@ -4,7 +4,6 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "../../../libs/auth";
-import { api } from "../../../libs/api";
 import type { User, CreateUserDto } from "../../../libs/types";
 import AdminLayout from "../components/layout";
 import toast from "react-hot-toast";
@@ -23,21 +22,36 @@ import {
 } from "../../../components/ui/dialog";
 import DataTable, { type ColumnDef } from "../../../components/table";
 import SimplePagination from "../../../components/table/simple-pagination";
+import { useParticipants } from "@/hooks/use-participants";
 
 export default function ParticipantsPage() {
     const router = useRouter();
-    const [users, setUsers] = useState<User[]>([]);
-    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalUsers, setTotalUsers] = useState(0);
     const [pageSize] = useState(10);
+
+    // Use query hook
+    const {
+        data,
+        isLoading,
+        isError,
+        createUser,
+        isCreating,
+        importUsers,
+        isImporting
+    } = useParticipants(currentPage, pageSize);
+
+    const users = data?.users || [];
+    const totalUsers = data?.total || 0;
+    const totalPages = data?.totalPages || 1;
+
+    // Filtered users state (client-side search on current page)
+    // Note: Ideally search should be server-side, but keeping client-side for now as per requirement
+    const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
     // Form states
     const [newUser, setNewUser] = useState<CreateUserDto>({
@@ -52,36 +66,20 @@ export default function ParticipantsPage() {
             router.push("/admin");
             return;
         }
-        loadUsers();
-    }, [router, currentPage]);
+    }, [router]);
 
     useEffect(() => {
-        // Filter users based on search query (client-side filtering)
-        if (searchQuery.trim()) {
-            const filtered = users.filter((user) =>
-                user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
-            setFilteredUsers(filtered);
-        } else {
-            setFilteredUsers(users);
+        if (users) {
+            if (searchQuery.trim()) {
+                const filtered = users.filter((user) =>
+                    user.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+                setFilteredUsers(filtered);
+            } else {
+                setFilteredUsers(users);
+            }
         }
     }, [searchQuery, users]);
-
-    const loadUsers = async () => {
-        try {
-            setLoading(true);
-            const data = await api.getUsers(currentPage, pageSize);
-            setUsers(data.users);
-            setFilteredUsers(data.users);
-            setTotalUsers(data.total);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error("Error loading users:", error);
-            toast.error("Không thể tải danh sách người tham dự");
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -96,18 +94,11 @@ export default function ParticipantsPage() {
         }
 
         try {
-            await api.createUser(newUser);
-            toast.success("Thêm người tham dự thành công!");
+            await createUser(newUser);
             setIsAddModalOpen(false);
             setNewUser({ full_name: "", lucky_number: 0, role: "employee" });
-            loadUsers();
-        } catch (error: any) {
-            console.error("Error adding user:", error);
-            if (error.response?.status === 400) {
-                toast.error("Số may mắn đã tồn tại");
-            } else {
-                toast.error("Không thể thêm người tham dự");
-            }
+        } catch (error) {
+            // Error handled in hook
         }
     };
 
@@ -120,18 +111,11 @@ export default function ParticipantsPage() {
         }
 
         try {
-            const result = await api.importUsersCSV(csvFile);
-            toast.success(`Import thành công ${result.count} người tham dự!`);
+            await importUsers(csvFile);
             setIsImportModalOpen(false);
             setCsvFile(null);
-            loadUsers();
-        } catch (error: any) {
-            console.error("Error importing CSV:", error);
-            if (error.response?.status === 400) {
-                toast.error("File CSV không hợp lệ hoặc có số may mắn trùng");
-            } else {
-                toast.error("Không thể import file CSV");
-            }
+        } catch (error) {
+            // Error handled in hook
         }
     };
 
@@ -191,11 +175,21 @@ export default function ParticipantsPage() {
         },
     ];
 
-    if (loading) {
+    if (isLoading) {
         return (
             <AdminLayout>
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-600">Đang tải...</div>
+                </div>
+            </AdminLayout>
+        );
+    }
+
+    if (isError) {
+        return (
+            <AdminLayout>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-red-600">Có lỗi xảy ra khi tải dữ liệu</div>
                 </div>
             </AdminLayout>
         );
@@ -249,7 +243,7 @@ export default function ParticipantsPage() {
                                 <div>
                                     <p className="text-gray-600 text-sm font-medium">Đã Check-in (Trang này)</p>
                                     <p className="text-3xl font-bold text-green-600 mt-1">
-                                        {checkedInUsers} / {totalUsers}
+                                        {checkedInUsers} / {users?.length}
                                     </p>
                                 </div>
                                 <div className="bg-green-100 p-3 rounded-full">
@@ -280,7 +274,7 @@ export default function ParticipantsPage() {
                 <DataTable
                     data={filteredUsers}
                     columns={columns}
-                    isLoading={loading}
+                    isLoading={isLoading}
                     hasSort={true}
                 />
 
@@ -351,7 +345,9 @@ export default function ParticipantsPage() {
                             >
                                 Hủy
                             </Button>
-                            <Button type="submit">Thêm</Button>
+                            <Button type="submit" disabled={isCreating}>
+                                {isCreating ? "Đang thêm..." : "Thêm"}
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -392,8 +388,9 @@ export default function ParticipantsPage() {
                             <Button
                                 type="submit"
                                 className="bg-green-600 hover:bg-green-700"
+                                disabled={isImporting}
                             >
-                                Import
+                                {isImporting ? "Đang import..." : "Import"}
                             </Button>
                         </DialogFooter>
                     </form>

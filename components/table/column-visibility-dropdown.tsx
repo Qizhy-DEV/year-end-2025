@@ -32,7 +32,7 @@ export default function ColumnVisibilityDropdown(props: Readonly<ColumnVisibilit
               key={col.id}
               className="capitalize"
               checked={col.getIsVisible()}
-              onCheckedChange={(val) => col.toggleVisibility(!!val)}
+              onCheckedChange={(val: boolean) => col.toggleVisibility(!!val)}
             >
               {col.id.replace(/^__select__$/, "select")}
             </DropdownMenuCheckboxItem>

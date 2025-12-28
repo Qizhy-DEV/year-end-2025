@@ -4,7 +4,6 @@ import type React from "react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "../../../libs/auth";
-import { api } from "../../../libs/api";
 import type { Prize, CreatePrizeDto } from "../../../libs/types";
 import AdminLayout from "../components/layout";
 import toast from "react-hot-toast";
@@ -23,18 +22,30 @@ import {
 } from "../../../components/ui/dialog";
 import DataTable, { type ColumnDef } from "../../../components/table";
 import SimplePagination from "../../../components/table/simple-pagination";
+import { usePrizes } from "@/hooks/use-prizes";
 
 export default function PrizesPage() {
     const router = useRouter();
-    const [prizes, setPrizes] = useState<Prize[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalPrizes, setTotalPrizes] = useState(0);
     const [pageSize] = useState(10);
+
+    // Use query hook
+    const {
+        data,
+        isLoading,
+        isError,
+        createPrize,
+        isCreating,
+        revealPrize,
+        isRevealing
+    } = usePrizes(currentPage, pageSize);
+
+    const prizes = data?.prizes || [];
+    const totalPrizes = data?.total || 0;
+    const totalPages = data?.totalPages || 1;
 
     // Form state
     const [newPrize, setNewPrize] = useState<CreatePrizeDto>({
@@ -47,23 +58,7 @@ export default function PrizesPage() {
             router.push("/admin");
             return;
         }
-        loadPrizes();
-    }, [router, currentPage]);
-
-    const loadPrizes = async () => {
-        try {
-            setLoading(true);
-            const data = await api.getPrizes(currentPage, pageSize);
-            setPrizes(data.prizes);
-            setTotalPrizes(data.total);
-            setTotalPages(data.totalPages);
-        } catch (error) {
-            console.error("Error loading prizes:", error);
-            toast.error("Không thể tải danh sách giải thưởng");
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [router]);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -78,31 +73,19 @@ export default function PrizesPage() {
         }
 
         try {
-            await api.createPrize(newPrize);
-            toast.success("Thêm giải thưởng thành công!");
+            await createPrize(newPrize);
             setIsAddModalOpen(false);
             setNewPrize({ name: "", lucky_number: 0 });
-            loadPrizes();
-        } catch (error: any) {
-            console.error("Error adding prize:", error);
-            toast.error("Không thể thêm giải thưởng");
+        } catch (error) {
+            // Error handled in hook
         }
     };
 
     const handleRevealPrize = async (prizeId: string) => {
         try {
-            const result = await api.revealPrize(prizeId);
-            toast.success(`Đã công bố người trúng giải!`);
-            loadPrizes();
-        } catch (error: any) {
-            console.error("Error revealing prize:", error);
-            if (error.response?.status === 400) {
-                toast.error("Giải thưởng đã được công bố rồi");
-            } else if (error.response?.status === 404) {
-                toast.error("Không tìm thấy người trúng giải");
-            } else {
-                toast.error("Không thể công bố giải thưởng");
-            }
+            await revealPrize(prizeId);
+        } catch (error) {
+            // Error handled in hook
         }
     };
 
@@ -162,10 +145,12 @@ export default function PrizesPage() {
         {
             id: "actions",
             header: "Hành Động",
+            // Disable button while processing
             cell: ({ row }) =>
                 !row.original.is_revealed && (
                     <Button
                         onClick={() => handleRevealPrize(row.original._id)}
+                        disabled={isRevealing}
                         variant="ghost"
                         size="sm"
                         className="text-primary hover:text-primary/80"
@@ -178,11 +163,21 @@ export default function PrizesPage() {
         },
     ];
 
-    if (loading) {
+    if (isLoading) {
         return (
             <AdminLayout>
                 <div className="flex items-center justify-center h-64">
                     <div className="text-gray-600">Đang tải...</div>
+                </div>
+            </AdminLayout>
+        );
+    }
+
+    if (isError) {
+        return (
+            <AdminLayout>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-red-600">Có lỗi xảy ra khi tải dữ liệu</div>
                 </div>
             </AdminLayout>
         );
@@ -236,7 +231,7 @@ export default function PrizesPage() {
                 <DataTable
                     data={prizes}
                     columns={columns}
-                    isLoading={loading}
+                    isLoading={isLoading}
                     hasSort={true}
                 />
 
@@ -334,7 +329,9 @@ export default function PrizesPage() {
                             >
                                 Hủy
                             </Button>
-                            <Button type="submit">Thêm</Button>
+                            <Button type="submit" disabled={isCreating}>
+                                {isCreating ? "Đang xử lý..." : "Thêm"}
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
