@@ -25,7 +25,7 @@ export default function TableHeaderComponent<T>(props: Readonly<TableHeaderProps
                 style={{ width: header.getSize() }}
                 onClick={isSortable ? getSortClickHandler(header) : undefined}
                 className={cn(
-                  "bg-sidebar! dark:bg-card! text-foreground/80 py-3",
+                  "bg-sidebar! text-foreground/80 py-3",
                   isSortable && "cursor-pointer select-none",
                   isSortable && "hover:bg-muted/40 transition",
                   headerIndex === 0 && "pl-4"

@@ -150,6 +150,9 @@ export default function QRScannerPage() {
         return updated.slice(0, 10); // Keep only last 10
       });
 
+      // Navigate to main page with user ID to show lucky number
+      router.push(`/lucky-number/?userId=${user._id}`);
+
       // Clear the last processed QR after successful check-in to allow re-scanning same user later
       // But add a cooldown period
       if (processingTimeoutRef.current) {
@@ -182,8 +185,6 @@ export default function QRScannerPage() {
     }
   };
 
-  // ... (lines omitted)
-
   const handleManualCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualName.trim()) {
@@ -196,7 +197,6 @@ export default function QRScannerPage() {
       if (result.count === 0) {
         toast.error("Không tìm thấy người tham dự nào với tên này");
       } else if (result.count === 1) {
-        // Exact match or single result, proceed to check-in
         await handleCheckIn(result.users[0]._id);
         setManualName("");
       } else {

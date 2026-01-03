@@ -3,7 +3,6 @@ import { useSidebar } from '@/components/ui/sidebar';
 import { PanelLeft } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
-import AnimatedThemeToggle from './components/AnimatedThemeToggle';
 import { getAllRoutes } from '../sidebar/data/sidebar-item';
 
 const Navbar = () => {
@@ -25,9 +24,6 @@ const Navbar = () => {
                     />
                     <Separator orientation="vertical" className="h-1/2" />
                     <p>{routeName}</p>
-                </div>
-                <div className="flex items-center gap-4 h-full">
-                    <AnimatedThemeToggle />
                 </div>
             </div>
         </div>

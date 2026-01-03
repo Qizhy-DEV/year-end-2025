@@ -87,6 +87,11 @@ export const api = {
         return response.data;
     },
 
+    async getUserById(userId: string): Promise<User> {
+        const response = await apiClient.get(`/users/${userId}`);
+        return response.data;
+    },
+
     // Prizes
     async getPrizes(page: number = 1, limit: number = 10): Promise<{ prizes: Prize[]; total: number; page: number; totalPages: number }> {
         const response = await apiClient.get(`/prizes?page=${page}&limit=${limit}`);
