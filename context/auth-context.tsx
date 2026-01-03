@@ -51,14 +51,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const res = await login({
             fullName: user.display_name,
           });
-          const { lucky, ...rest } = res;
-          const updatedUser = {
+          // Chỉ cập nhật token trong state, không lưu vào localStorage
+          setUser({
             ...user,
-            access_token: rest.access_token,
-            currentUser: rest.currentUser,
-          };
-          setUser(updatedUser);
-          setAuthData(updatedUser);
+            access_token: res.access_token,
+            currentUser: res.currentUser,
+          });
         } catch (error) {
           // Handle error silently or show message
           console.error("Failed to refresh user data:", error);
