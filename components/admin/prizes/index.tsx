@@ -260,6 +260,8 @@ export default function PrizesPage() {
         <SimplePagination
           currentPage={currentPage}
           totalPages={totalPages}
+          totalItems={totalPrizes}
+          pageSize={pageSize}
           onPageChange={handlePageChange}
         />
 

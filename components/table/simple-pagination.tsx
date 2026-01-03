@@ -14,8 +14,8 @@ interface SimplePaginationProps {
   totalPages: number;
   totalItems: number;
   pageSize: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange: (pageSize: number) => void;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
   className?: string;
 }
 
@@ -104,7 +104,7 @@ export default function SimplePagination({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(currentPage - 1)}
+            onClick={() => onPageChange?.(currentPage - 1)}
             disabled={!canGoPrevious}
             className="h-8 w-8 p-0"
           >
@@ -132,7 +132,7 @@ export default function SimplePagination({
                 key={pageNum}
                 variant={isActive ? "default" : "outline"}
                 size="sm"
-                onClick={() => onPageChange(pageNum)}
+                onClick={() => onPageChange?.(pageNum)}
                 className={cn(
                   "h-8 w-8 p-0",
                   isActive && "bg-primary text-primary-foreground"
@@ -147,7 +147,7 @@ export default function SimplePagination({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onPageChange(currentPage + 1)}
+            onClick={() => onPageChange?.(currentPage + 1)}
             disabled={!canGoNext}
             className="h-8 w-8 p-0"
           >
@@ -164,8 +164,8 @@ export default function SimplePagination({
         <Select
           value={pageSize.toString()}
           onValueChange={(value) => {
-            onPageSizeChange(Number(value));
-            onPageChange(1); // Reset to first page when changing page size
+            onPageSizeChange?.(Number(value));
+            onPageChange?.(1); // Reset to first page when changing page size
           }}
         >
           <SelectTrigger className="h-8 w-[70px]">
