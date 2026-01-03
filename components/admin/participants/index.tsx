@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { auth } from "../../../libs/auth";
 import type { User, CreateUserDto } from "../../../libs/types";
 import AdminLayout from "../components/layout";
@@ -12,6 +12,8 @@ import {
   UserPlus,
   CheckCircle,
   Users as UsersIcon,
+  XCircle,
+  Filter,
 } from "lucide-react";
 import { Card, CardContent } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
@@ -27,17 +29,25 @@ import {
 } from "../../../components/ui/dialog";
 import DataTable, { type ColumnDef } from "../../../components/table";
 import SimplePagination from "../../../components/table/simple-pagination";
-import { useParticipants } from "@/hooks/use-participants";
+import {
+  useParticipants,
+  useParticipantsStats,
+} from "@/hooks/use-participants";
 import { type SortingState } from "@tanstack/react-table";
-import { useDebounce } from "@/hooks/use-debounce";
+import SearchParamsInput from "../../ui-custom/search-param-input";
+import DropdownCustom from "../../ui-custom/dropdown";
 
 export default function ParticipantsPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 500);
-  const [isCheckedInFilter, setIsCheckedInFilter] = useState<
-    boolean | undefined
-  >(undefined);
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Read search and checkedIn filter from URL params
+  const searchQuery = searchParams.get("search") || "";
+  const checkedInParam = searchParams.get("checkedIn");
+  const isCheckedInFilter =
+    checkedInParam === null ? undefined : checkedInParam === "true";
+
   const [sorting, setSorting] = useState<SortingState>([]);
 
   // Derived sort string for API
@@ -53,7 +63,7 @@ export default function ParticipantsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Use query hook
+  // Use query hooks
   const {
     data,
     isLoading,
@@ -65,14 +75,17 @@ export default function ParticipantsPage() {
   } = useParticipants(
     currentPage,
     pageSize,
-    debouncedSearch,
+    searchQuery || undefined,
     isCheckedInFilter,
     sortString
   );
 
+  // Get stats for statistics cards (all users, not filtered)
+  const { data: statsData } = useParticipantsStats();
+  const statsTotalUsers = statsData?.total || 0;
+  const statsCheckedInUsers = statsData?.checkedInCount || 0;
+
   const users = data?.users || [];
-  const totalUsers = data?.total || 0;
-  const checkedInUsers = data?.checkedInCount || 0;
   const totalPages = data?.totalPages || 1;
 
   // Form states
@@ -89,6 +102,11 @@ export default function ParticipantsPage() {
       return;
     }
   }, [router]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, isCheckedInFilter]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -137,13 +155,13 @@ export default function ParticipantsPage() {
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: "lucky_number",
-      header: "Số May Mắn",
+      header: "Số",
       cell: ({ row }) => (
         <span className="text-sm font-bold text-primary">
           {row.original.lucky_number}
         </span>
       ),
-      size: 120,
+      size: 80,
     },
     {
       accessorKey: "full_name",
@@ -153,6 +171,7 @@ export default function ParticipantsPage() {
           {row.original.full_name}
         </span>
       ),
+      size: 200,
     },
     {
       accessorKey: "role",
@@ -169,33 +188,26 @@ export default function ParticipantsPage() {
           {row.original.role === "employee" ? "Nhân viên" : "Khách mời"}
         </Badge>
       ),
-      size: 120,
     },
     {
       accessorKey: "is_checked_in",
-      header: "Trạng Thái",
+      header: "Check-in",
       cell: ({ row }) =>
         row.original.is_checked_in ? (
-          <div className="flex items-center text-green-600 text-sm font-medium">
+          <div className="flex items-center justify-center md:justify-start text-green-600 text-sm font-medium">
             <CheckCircle className="w-4 h-4 mr-1" />
-            Đã check-in
+            <span className="hidden md:block">Đã check-in</span>
           </div>
         ) : (
-          <span className="text-muted-foreground text-sm">Chưa check-in</span>
+          <span className="flex items-center justify-center md:justify-start text-muted-foreground text-sm">
+            <XCircle className="w-4 h-4 mr-1" />
+            <span className="hidden md:block">Chưa check-in</span>
+          </span>
         ),
-      size: 150,
+      size: 100,
+      enableSorting: false,
     },
   ];
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-600">Đang tải...</div>
-        </div>
-      </AdminLayout>
-    );
-  }
 
   if (isError) {
     return (
@@ -213,37 +225,37 @@ export default function ParticipantsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="w-xs">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">
+          <div className="grid grid-cols-2 md:flex gap-3 md:gap-4 w-full md:w-[700px]">
+            <Card className="flex-1">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-600 text-xs md:text-sm font-medium">
                       Tổng Người Tham Dự
                     </p>
-                    <p className="text-3xl font-bold text-gray-900 mt-1">
-                      {totalUsers}
+                    <p className="text-xl md:text-3xl font-bold text-gray-900 mt-1">
+                      {statsTotalUsers}
                     </p>
                   </div>
-                  <div className="bg-blue-100 p-3 rounded-full">
-                    <UsersIcon className="w-8 h-8 text-blue-600" />
+                  <div className="bg-blue-100 p-2 md:p-3 rounded-full shrink-0">
+                    <UsersIcon className="w-6 h-6 md:w-8 md:h-8 text-blue-600" />
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-gray-600 text-sm font-medium">
+            <Card className="flex-1">
+              <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-gray-600 text-xs md:text-sm font-medium">
                       Đã Check-in
                     </p>
-                    <p className="text-3xl font-bold text-green-600 mt-1">
-                      {checkedInUsers} / {totalUsers}
+                    <p className="text-xl md:text-3xl font-bold text-green-600 mt-1">
+                      {statsCheckedInUsers} / {statsTotalUsers}
                     </p>
                   </div>
-                  <div className="bg-green-100 p-3 rounded-full">
-                    <CheckCircle className="w-8 h-8 text-green-600" />
+                  <div className="bg-green-100 p-2 md:p-3 rounded-full shrink-0">
+                    <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -266,7 +278,60 @@ export default function ParticipantsPage() {
         </div>
 
         {/* Search and Filter */}
-        <div className="flex flex-col md:flex-row gap-4"></div>
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <SearchParamsInput
+              paramKey="search"
+              placeholder="Tìm kiếm theo tên..."
+              className="w-full md:max-w-md"
+            />
+          </div>
+          <DropdownCustom
+            options={[
+              {
+                name: "Tất cả",
+                icon: UsersIcon,
+                fn: () => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.delete("checkedIn");
+                  params.set("page", "1");
+                  router.replace(`${pathname}?${params.toString()}`);
+                },
+              },
+              {
+                name: "Đã check-in",
+                icon: CheckCircle,
+                fn: () => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("checkedIn", "true");
+                  params.set("page", "1");
+                  router.replace(`${pathname}?${params.toString()}`);
+                },
+              },
+              {
+                name: "Chưa check-in",
+                icon: XCircle,
+                fn: () => {
+                  const params = new URLSearchParams(searchParams.toString());
+                  params.set("checkedIn", "false");
+                  params.set("page", "1");
+                  router.replace(`${pathname}?${params.toString()}`);
+                },
+              },
+            ]}
+          >
+            <Button variant="outline" className="w-full md:w-auto">
+              <Filter className="w-4 h-4 mr-2" />
+              <span>
+                {isCheckedInFilter === undefined
+                  ? "Tất cả"
+                  : isCheckedInFilter
+                  ? "Đã check-in"
+                  : "Chưa check-in"}
+              </span>
+            </Button>
+          </DropdownCustom>
+        </div>
 
         {/* Users Table */}
         <DataTable
@@ -283,7 +348,7 @@ export default function ParticipantsPage() {
         <SimplePagination
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={totalUsers}
+          totalItems={data?.total || 0}
           pageSize={pageSize}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}

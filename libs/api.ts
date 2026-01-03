@@ -45,6 +45,11 @@ export const api = {
     },
 
     // Users / Participants
+    async getUsersStats(): Promise<{ total: number; checkedInCount: number }> {
+        const response = await apiClient.get('/users/stats');
+        return response.data;
+    },
+
     async getUsers(
         page: number = 1,
         limit: number = 10,

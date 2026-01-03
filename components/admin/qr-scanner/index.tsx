@@ -120,6 +120,8 @@ export default function QRScannerPage() {
     lastProcessedQrRef.current = decodedText;
     lastProcessedTimeRef.current = now;
 
+    console.log("decodedText", decodedText);
+
     // Process the check-in
     await handleCheckIn(decodedText);
   };
@@ -150,8 +152,21 @@ export default function QRScannerPage() {
         return updated.slice(0, 10); // Keep only last 10
       });
 
+      // Stop scanning before navigation
+      if (scanning && scannerRef.current) {
+        try {
+          await scannerRef.current.stop();
+          setScanning(false);
+        } catch (err) {
+          console.error("Error stopping scanner:", err);
+        }
+      }
+
       // Navigate to main page with user ID to show lucky number
-      router.push(`/lucky-number/?userId=${user._id}`);
+      // Use window.location for reliable navigation
+      setTimeout(() => {
+        window.location.href = `/lucky-number/?userId=${user._id}`;
+      }, 500); // Small delay to ensure toast is visible
 
       // Clear the last processed QR after successful check-in to allow re-scanning same user later
       // But add a cooldown period

@@ -4,6 +4,13 @@ import { api } from "@/libs/api";
 import { CreateUserDto } from "@/libs/types";
 import toast from "react-hot-toast";
 
+export const useParticipantsStats = () => {
+    return useQuery({
+        queryKey: ["participants-stats"],
+        queryFn: () => api.getUsersStats(),
+    });
+};
+
 export const useParticipants = (
     page: number = 1,
     limit: number = 10,
@@ -22,6 +29,7 @@ export const useParticipants = (
         mutationFn: (data: CreateUserDto) => api.createUser(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["participants"] });
+            queryClient.invalidateQueries({ queryKey: ["participants-stats"] });
             toast.success("Thêm người tham dự thành công!");
         },
         onError: (error: any) => {
@@ -37,6 +45,7 @@ export const useParticipants = (
         mutationFn: (file: File) => api.importUsersCSV(file),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["participants"] });
+            queryClient.invalidateQueries({ queryKey: ["participants-stats"] });
             toast.success(`Import thành công ${data.count} người tham dự!`);
         },
         onError: (error: any) => {
@@ -52,6 +61,7 @@ export const useParticipants = (
         mutationFn: (userId: string) => api.checkInUser(userId),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: ["participants"] });
+            queryClient.invalidateQueries({ queryKey: ["participants-stats"] });
             toast.success(`Check-in thành công: ${data.user.full_name}!`);
         },
         onError: (error: any) => {
