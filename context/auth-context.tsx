@@ -14,6 +14,9 @@ type AuthUser = {
   display_name: string;
   password: string;
   lucky: number;
+  avatar?: string;
+  email?: string;
+  admin?: boolean;
 };
 
 type AuthContextType = {

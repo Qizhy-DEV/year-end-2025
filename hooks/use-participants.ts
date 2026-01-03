@@ -4,12 +4,18 @@ import { api } from "@/libs/api";
 import { CreateUserDto } from "@/libs/types";
 import toast from "react-hot-toast";
 
-export const useParticipants = (page: number = 1, limit: number = 10) => {
+export const useParticipants = (
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    isCheckedIn?: boolean,
+    sort?: string
+) => {
     const queryClient = useQueryClient();
 
     const query = useQuery({
-        queryKey: ["participants", page, limit],
-        queryFn: () => api.getUsers(page, limit),
+        queryKey: ["participants", page, limit, search, isCheckedIn, sort],
+        queryFn: () => api.getUsers(page, limit, search, isCheckedIn, sort),
     });
 
     const createUserMutation = useMutation({

@@ -45,8 +45,19 @@ export const api = {
     },
 
     // Users / Participants
-    async getUsers(page: number = 1, limit: number = 10): Promise<{ users: User[]; total: number; page: number; totalPages: number }> {
-        const response = await apiClient.get(`/users?page=${page}&limit=${limit}`);
+    async getUsers(
+        page: number = 1,
+        limit: number = 10,
+        search?: string,
+        isCheckedIn?: boolean,
+        sort?: string
+    ): Promise<{ users: User[]; total: number; checkedInCount: number; page: number; totalPages: number }> {
+        let url = `/users?page=${page}&limit=${limit}`;
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (isCheckedIn !== undefined) url += `&isCheckedIn=${isCheckedIn}`;
+        if (sort) url += `&sort=${sort}`;
+
+        const response = await apiClient.get(url);
         return response.data;
     },
 

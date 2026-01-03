@@ -1,7 +1,7 @@
 import { flexRender, type Row, type Column } from "@tanstack/react-table";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/libs/utils";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PackageOpen } from "@/components/icons";
 
 interface TableBodyProps<T> {

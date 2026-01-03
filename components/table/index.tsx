@@ -29,6 +29,9 @@ interface Props<T extends object> {
   onRowClick?: (_data: T) => void;
   onItemSelect?: (_items: T[]) => void;
   hasSort?: boolean;
+  onExternalSortingChange?: React.Dispatch<React.SetStateAction<SortingState>>;
+  manualSorting?: boolean;
+  externalSorting?: SortingState;
 }
 
 /**
@@ -43,8 +46,14 @@ export default function DataTable<T extends object>({
   onRowClick,
   onItemSelect,
   hasSort = false,
+  externalSorting,
+  onExternalSortingChange,
+  manualSorting = false,
 }: Readonly<Props<T>>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [internalSorting, setInternalSorting] = React.useState<SortingState>([]);
+  const sorting = externalSorting || internalSorting;
+  const setSorting = onExternalSortingChange || setInternalSorting;
+
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState<Record<string, boolean>>({});
 
@@ -86,7 +95,7 @@ export default function DataTable<T extends object>({
     if (header?.column?.getCanSort?.()) {
       return () => {
         const colId = header.column.id;
-        const currentSorted = sorting.find((s) => s.id === colId);
+        const currentSorted = sorting.find((s: { id: string, desc: boolean }) => s.id === colId);
         let nextSort: SortingState = [];
         if (!currentSorted) {
           nextSort = [{ id: colId, desc: false }];
@@ -110,6 +119,7 @@ export default function DataTable<T extends object>({
       columnVisibility,
       rowSelection,
     },
+    manualSorting,
     enableRowSelection: hasSelector,
     onSortingChange: hasSort ? setSorting : undefined,
     onColumnVisibilityChange: setColumnVisibility,

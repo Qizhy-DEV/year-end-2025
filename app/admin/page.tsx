@@ -3,8 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { auth } from "@/libs/auth";
-import { api } from "@/libs/api";
+import { useAuthAdmin } from "@/context/auth-admin-context";
 import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ import { Label } from "@/components/ui/label";
 
 export default function AdminLoginPage() {
     const router = useRouter();
+    const { login } = useAuthAdmin();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -22,8 +22,7 @@ export default function AdminLoginPage() {
         setLoading(true);
 
         try {
-            const response = await api.login(username, password);
-            auth.setToken(response.access_token);
+            await login(username, password);
             toast.success("Đăng nhập thành công");
             router.push("/admin/participants");
         } catch (error) {
@@ -46,7 +45,7 @@ export default function AdminLoginPage() {
                 <CardContent>
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="username">Tên đăng nhập</Label>
+                            <Label htmlFor="username" suppressHydrationWarning>Tên đăng nhập</Label>
                             <Input
                                 id="username"
                                 type="text"
@@ -57,7 +56,7 @@ export default function AdminLoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Mật khẩu</Label>
+                            <Label htmlFor="password" suppressHydrationWarning>Mật khẩu</Label>
                             <Input
                                 id="password"
                                 type="password"
