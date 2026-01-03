@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { AuthProvider, useAuth } from "@/context/auth-context";
 import { queryClient } from "@/core/query-client";
 import ComingSoon from "@/components/coming-soon";
@@ -33,7 +34,9 @@ function Page() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Content />
+        <Suspense fallback={<div className="h-screen w-full flex items-center justify-center">Đang tải...</div>}>
+          <Content />
+        </Suspense>
       </AuthProvider>
     </QueryClientProvider>
   );
