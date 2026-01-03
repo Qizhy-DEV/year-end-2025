@@ -114,8 +114,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-
-main,
-body {
-  background-color: black;
-}

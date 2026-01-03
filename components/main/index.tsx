@@ -20,6 +20,24 @@ const Main = () => {
   const userId = searchParams.get("userId");
   const router = useRouter();
 
+  // Set black background for body and main when on this page
+  useEffect(() => {
+    document.body.style.backgroundColor = "black";
+    const mainElement = document.querySelector("main");
+    if (mainElement) {
+      (mainElement as HTMLElement).style.backgroundColor = "black";
+    }
+
+    // Cleanup: restore original background when component unmounts
+    return () => {
+      document.body.style.backgroundColor = "";
+      const mainElement = document.querySelector("main");
+      if (mainElement) {
+        (mainElement as HTMLElement).style.backgroundColor = "";
+      }
+    };
+  }, []);
+
   // Fetch user data from userId query parameter
   useEffect(() => {
     const fetchUser = async () => {
@@ -36,7 +54,7 @@ const Main = () => {
     };
 
     fetchUser();
-  }, [userId]);
+  }, [userId, router]);
 
   const handleClick = async (index: number) => {
     setCurActiveIndex(index);
