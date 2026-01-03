@@ -1,10 +1,8 @@
 import Image from "next/image";
-import { useAuth } from "@/context/auth-context";
 import { motion } from "framer-motion";
 import { useEffect } from "react";
+import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
-
-const padLuckyNumber = (num: number) => num.toString().padStart(3, "0");
 
 const starVariants = {
   initial: { opacity: 0, scale: 0 },
@@ -56,7 +54,7 @@ const textVariants = {
   },
 };
 
-const luckyNumberVariants = {
+const iconVariants = {
   initial: { opacity: 0, scale: 0.5, rotate: -180 },
   animate: {
     opacity: 1,
@@ -67,20 +65,6 @@ const luckyNumberVariants = {
       stiffness: 200,
       damping: 15,
       delay: 0.6,
-    },
-  },
-};
-
-const cloverVariants = {
-  initial: { opacity: 0, scale: 0 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      type: "spring" as const,
-      stiffness: 200,
-      damping: 12,
-      delay: 0.8,
     },
   },
 };
@@ -97,18 +81,16 @@ const logoutLinkVariants = {
   },
 };
 
-const ResultPage = () => {
-  const { user, logout } = useAuth();
+const CheckInRequired = () => {
+  const { logout } = useAuth();
   const router = useRouter();
-  if (!user) return null;
-  const luckyNumber = user.lucky ?? 0;
 
   const handleLogout = () => {
     logout();
     router.push("/");
   };
 
-  // Set black background for body and main when on this page
+  // Set background color for body and main when on this page
   useEffect(() => {
     document.body.style.backgroundColor = "#efd4aa";
     const mainElement = document.querySelector("main");
@@ -171,7 +153,7 @@ const ResultPage = () => {
         initial="initial"
         animate="animate"
       >
-        {/* Red envelope image */}
+        {/* Logo image */}
         <motion.div
           variants={imageVariants}
           initial="initial"
@@ -179,7 +161,7 @@ const ResultPage = () => {
         >
           <Image
             src="/hdwebsoft-blue.svg"
-            alt="Red Envelope"
+            alt="HDWebsoft Logo"
             width={150}
             height={70}
             className="mx-auto mb-2"
@@ -187,63 +169,57 @@ const ResultPage = () => {
           />
         </motion.div>
 
+        {/* Icon */}
         <motion.div
-          className="text-center mb-2 mt-2"
+          className="flex items-center justify-center my-4"
+          variants={iconVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <span className="text-6xl">📋</span>
+        </motion.div>
+
+        {/* Title */}
+        <motion.div
+          className="text-center mb-4"
           variants={textVariants}
           initial="initial"
           animate="animate"
         >
-          <p className="text-[#222] font-semibold text-md">
-            Số may mắn của bạn
+          <h1 className="text-2xl font-bold text-[#333] mb-2">
+            Vui lòng đến quầy tiếp tân
+          </h1>
+        </motion.div>
+
+        {/* Message */}
+        <motion.p
+          className="text-center text-lg text-[#222] font-medium"
+          variants={textVariants}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.6 }}
+        >
+          Để nhận số may mắn, bạn cần check-in tại quầy tiếp tân trước.
+        </motion.p>
+
+        {/* Additional info */}
+        <motion.div
+          className="mt-6 pt-6 border-t border-[#e5b772] w-full"
+          variants={textVariants}
+          initial="initial"
+          animate="animate"
+          transition={{ delay: 0.8 }}
+        >
+          <p className="text-center text-sm text-[#666] leading-relaxed">
+            <span className="block mb-2">📍 Tìm quầy tiếp tân tại sự kiện</span>
+            <span className="block mb-2">
+              ✅ Nhân viên sẽ hỗ trợ bạn check-in
+            </span>
+            <span className="block">
+              🎁 Sau khi check-in, bạn sẽ nhận số may mắn
+            </span>
           </p>
         </motion.div>
-
-        {/* Lucky number display */}
-        <motion.div
-          className="flex items-center justify-center my-2"
-          initial="initial"
-          animate="animate"
-        >
-          <motion.span
-            className="text-3xl mr-2"
-            variants={cloverVariants}
-            initial="initial"
-            animate="animate"
-          >
-            🍀
-          </motion.span>
-          <motion.span
-            className="font-bold text-5xl tracking-widest text-[#333] drop-shadow"
-            variants={luckyNumberVariants}
-            initial="initial"
-            animate="animate"
-          >
-            {padLuckyNumber(luckyNumber)}
-          </motion.span>
-          <motion.span
-            className="text-3xl ml-2"
-            variants={cloverVariants}
-            initial="initial"
-            animate="animate"
-            transition={{ delay: 0.9 }}
-          >
-            🍀
-          </motion.span>
-        </motion.div>
-
-        {/* Congratulations text */}
-        <motion.p
-          className="text-center text-lg text-[#222] font-medium mt-4"
-          variants={textVariants}
-          initial="initial"
-          animate="animate"
-          transition={{ delay: 1 }}
-        >
-          Chúc mừng bạn có số may mắn&nbsp;
-          <span className="font-bold text-[#333]">
-            {padLuckyNumber(luckyNumber)}
-          </span>
-        </motion.p>
 
         {/* Logout link */}
         <motion.button
@@ -262,4 +238,4 @@ const ResultPage = () => {
   );
 };
 
-export default ResultPage;
+export default CheckInRequired;

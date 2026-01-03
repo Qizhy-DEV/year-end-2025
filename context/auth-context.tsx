@@ -45,22 +45,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      if (!user) setIsLoading(false);
       if (user && user.display_name) {
-        setIsLoading(true);
         try {
           const res = await login({
             fullName: user.display_name,
           });
-          if (res.lucky) {
-            const updatedUser = {
-              ...user,
-              lucky: res.lucky,
-              access_token: res.access_token,
-              currentUser: res.currentUser,
-            };
-            setUser(updatedUser);
-            setAuthData(updatedUser);
-          }
+          const { lucky, ...rest } = res;
+          const updatedUser = {
+            ...user,
+            access_token: rest.access_token,
+            currentUser: rest.currentUser,
+          };
+          setUser(updatedUser);
+          setAuthData(updatedUser);
         } catch (error) {
           // Handle error silently or show message
           console.error("Failed to refresh user data:", error);
