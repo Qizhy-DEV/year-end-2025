@@ -13,7 +13,7 @@ export interface User {
 export interface Prize {
     _id: string;
     name: string;
-    lucky_number: number;
+    lucky_number: number | null;
     is_revealed: boolean;
     winner?: User;
     createdAt?: string;
@@ -37,6 +37,10 @@ export interface CreateUserDto {
 
 export interface CreatePrizeDto {
     name: string;
+    lucky_number?: number;
+}
+
+export interface UpdatePrizeLuckyNumberDto {
     lucky_number: number;
 }
 

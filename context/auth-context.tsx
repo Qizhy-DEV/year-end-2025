@@ -5,7 +5,7 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { getAuthData, setAuthData, removeAuthData } from "@/libs/token";
+import { setAuthData, removeAuthData } from "@/libs/token";
 import { useLogin } from "@/hooks/use-login";
 
 type AuthUser = {
@@ -36,41 +36,24 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const { mutateAsync: login } = useLogin();
+  useLogin();
   const [user, setUser] = useState<AuthUser | null>(() => {
-    const data = getAuthData();
-    return data;
+    // Không khởi tạo từ localStorage vì chỉ có token
+    return null;
   });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      if (!user) setIsLoading(false);
-      if (user && user.display_name) {
-        try {
-          const res = await login({
-            fullName: user.display_name,
-          });
-          // Chỉ cập nhật token trong state, không lưu vào localStorage
-          setUser({
-            ...user,
-            access_token: res.access_token,
-            currentUser: res.currentUser,
-          });
-        } catch (error) {
-          // Handle error silently or show message
-          console.error("Failed to refresh user data:", error);
-        }
-        setIsLoading(false);
-      }
-    };
-    fetchUser();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Không cần fetch user từ localStorage vì chỉ lưu token
+    setIsLoading(false);
   }, []);
 
   const loginUser = (userData: AuthUser) => {
     setUser(userData);
-    setAuthData(userData);
+    // Chỉ lưu access_token vào localStorage
+    if (userData.access_token) {
+      setAuthData({ access_token: userData.access_token });
+    }
   };
 
   const logout = () => {

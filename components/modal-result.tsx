@@ -105,7 +105,7 @@ export function LuckyMoneyModal({
     <>
       {/* Backdrop with fade-in */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-[#e2c086] z-40 transition-opacity duration-300 ${
           isAnimating ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}

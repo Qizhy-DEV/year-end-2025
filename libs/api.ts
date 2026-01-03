@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { auth } from './auth';
-import type { User, Prize, LoginResponse, CreateUserDto, CreatePrizeDto } from './types';
+import type { User, Prize, LoginResponse, CreateUserDto, CreatePrizeDto, UpdatePrizeLuckyNumberDto } from './types';
 
 // Base API URL - update this to match your backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8081';
@@ -105,6 +105,11 @@ export const api = {
 
     async createPrize(data: CreatePrizeDto): Promise<Prize> {
         const response = await apiClient.post<Prize>('/prizes', data);
+        return response.data;
+    },
+
+    async updatePrizeLuckyNumber(prizeId: string, data: UpdatePrizeLuckyNumberDto): Promise<Prize> {
+        const response = await apiClient.put(`/prizes/${prizeId}/lucky-number`, data);
         return response.data;
     },
 

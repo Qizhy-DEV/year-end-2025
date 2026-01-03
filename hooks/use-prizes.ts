@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/libs/api";
-import { CreatePrizeDto } from "@/libs/types";
+import { CreatePrizeDto, UpdatePrizeLuckyNumberDto } from "@/libs/types";
 import toast from "react-hot-toast";
 
 export const usePrizes = (page: number = 1, limit: number = 10) => {
@@ -23,6 +23,25 @@ export const usePrizes = (page: number = 1, limit: number = 10) => {
         },
     });
 
+    const updateLuckyNumberMutation = useMutation({
+        mutationFn: ({ prizeId, data }: { prizeId: string; data: UpdatePrizeLuckyNumberDto }) => 
+            api.updatePrizeLuckyNumber(prizeId, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["prizes"] });
+            toast.success("Cập nhật số may mắn thành công!");
+        },
+        onError: (error: any) => {
+            if (error.response?.status === 400) {
+                toast.error("Không thể cập nhật số may mắn cho giải thưởng đã công bố");
+            } else if (error.response?.status === 404) {
+                const message = error.response?.data?.message || "Không tìm thấy người dùng với số may mắn này";
+                toast.error(message);
+            } else {
+                toast.error("Không thể cập nhật số may mắn");
+            }
+        },
+    });
+
     const revealPrizeMutation = useMutation({
         mutationFn: (prizeId: string) => api.revealPrize(prizeId),
         onSuccess: () => {
@@ -31,7 +50,8 @@ export const usePrizes = (page: number = 1, limit: number = 10) => {
         },
         onError: (error: any) => {
             if (error.response?.status === 400) {
-                toast.error("Giải thưởng đã được công bố rồi");
+                const message = error.response?.data?.message || "Giải thưởng đã được công bố rồi hoặc chưa có số may mắn";
+                toast.error(message);
             } else if (error.response?.status === 404) {
                 toast.error("Không tìm thấy người trúng giải");
             } else {
@@ -44,6 +64,8 @@ export const usePrizes = (page: number = 1, limit: number = 10) => {
         ...query,
         createPrize: createPrizeMutation.mutateAsync,
         isCreating: createPrizeMutation.isPending,
+        updateLuckyNumber: updateLuckyNumberMutation.mutateAsync,
+        isUpdatingLuckyNumber: updateLuckyNumberMutation.isPending,
         revealPrize: revealPrizeMutation.mutateAsync,
         isRevealing: revealPrizeMutation.isPending,
     };

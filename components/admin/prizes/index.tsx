@@ -7,7 +7,7 @@ import { auth } from "../../../libs/auth";
 import type { Prize, CreatePrizeDto } from "../../../libs/types";
 import AdminLayout from "../components/layout";
 import toast from "react-hot-toast";
-import { Gift, Plus, Trophy, Eye } from "lucide-react";
+import { Gift, Plus, Trophy, Edit } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,7 +16,6 @@ import {
 } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Badge } from "../../../components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +31,10 @@ import { usePrizes } from "@/hooks/use-prizes";
 export default function PrizesPage() {
   const router = useRouter();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isUpdateLuckyNumberModalOpen, setIsUpdateLuckyNumberModalOpen] =
+    useState(false);
+  const [selectedPrize, setSelectedPrize] = useState<Prize | null>(null);
+  const [luckyNumber, setLuckyNumber] = useState<number>(0);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,8 +47,8 @@ export default function PrizesPage() {
     isError,
     createPrize,
     isCreating,
-    revealPrize,
-    isRevealing,
+    updateLuckyNumber,
+    isUpdatingLuckyNumber,
   } = usePrizes(currentPage, pageSize);
 
   const prizes = data?.prizes || [];
@@ -55,7 +58,6 @@ export default function PrizesPage() {
   // Form state
   const [newPrize, setNewPrize] = useState<CreatePrizeDto>({
     name: "",
-    lucky_number: 0,
   });
 
   useEffect(() => {
@@ -72,23 +74,44 @@ export default function PrizesPage() {
   const handleAddPrize = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!newPrize.name || !newPrize.lucky_number) {
-      toast.error("Vui lòng nhập đầy đủ thông tin");
+    if (!newPrize.name) {
+      toast.error("Vui lòng nhập tên giải thưởng");
       return;
     }
 
     try {
       await createPrize(newPrize);
       setIsAddModalOpen(false);
-      setNewPrize({ name: "", lucky_number: 0 });
+      setNewPrize({ name: "" });
+      // Reset to first page to see the new prize
+      setCurrentPage(1);
     } catch (error) {
       // Error handled in hook
     }
   };
 
-  const handleRevealPrize = async (prizeId: string) => {
+  const handleOpenUpdateLuckyNumber = (prize: Prize) => {
+    setSelectedPrize(prize);
+    setLuckyNumber(prize.lucky_number || 0);
+    setIsUpdateLuckyNumberModalOpen(true);
+  };
+
+  const handleUpdateLuckyNumber = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedPrize || !luckyNumber) {
+      toast.error("Vui lòng nhập số may mắn");
+      return;
+    }
+
     try {
-      await revealPrize(prizeId);
+      await updateLuckyNumber({
+        prizeId: selectedPrize._id,
+        data: { lucky_number: luckyNumber },
+      });
+      setIsUpdateLuckyNumberModalOpen(false);
+      setSelectedPrize(null);
+      setLuckyNumber(0);
     } catch (error) {
       // Error handled in hook
     }
@@ -113,61 +136,60 @@ export default function PrizesPage() {
     {
       accessorKey: "lucky_number",
       header: "Số May Mắn",
-      cell: ({ row }) => (
-        <span className="text-sm font-bold text-primary">
-          {row.original.lucky_number}
-        </span>
-      ),
+      cell: ({ row }) =>
+        row.original.lucky_number ? (
+          <span className="text-sm font-bold text-primary">
+            {row.original.lucky_number}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-sm">Chưa có</span>
+        ),
       size: 120,
     },
     {
       id: "winner",
       header: "Người Trúng Giải",
       cell: ({ row }) =>
-        row.original.is_revealed && row.original.winner ? (
+        row.original.winner ? (
           <span className="text-sm font-medium text-foreground">
             {row.original.winner.full_name}
           </span>
         ) : (
-          <span className="text-muted-foreground text-sm">Chưa công bố</span>
+          <span className="text-muted-foreground text-sm">Chưa có</span>
         ),
-    },
-    {
-      accessorKey: "is_revealed",
-      header: "Trạng Thái",
-      cell: ({ row }) =>
-        row.original.is_revealed ? (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-            Đã công bố
-          </Badge>
-        ) : (
-          <Badge
-            variant="secondary"
-            className="bg-gray-100 text-gray-800 hover:bg-gray-200"
-          >
-            Chưa công bố
-          </Badge>
-        ),
-      size: 130,
     },
     {
       id: "actions",
       header: "Hành Động",
-      // Disable button while processing
-      cell: ({ row }) =>
-        !row.original.is_revealed && (
-          <Button
-            onClick={() => handleRevealPrize(row.original._id)}
-            disabled={isRevealing}
-            variant="ghost"
-            size="sm"
-            className="text-primary hover:text-primary/80"
-          >
-            <Eye className="w-4 h-4 mr-1" />
-            <span>Công bố</span>
-          </Button>
-        ),
-      size: 130,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {!row.original.is_revealed && !row.original.lucky_number && (
+            <Button
+              onClick={() => handleOpenUpdateLuckyNumber(row.original)}
+              disabled={isUpdatingLuckyNumber}
+              variant="outline"
+              size="sm"
+              className="text-primary hover:text-primary/80"
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              <span>Thêm số</span>
+            </Button>
+          )}
+          {!row.original.is_revealed && row.original.lucky_number && (
+            <Button
+              onClick={() => handleOpenUpdateLuckyNumber(row.original)}
+              disabled={isUpdatingLuckyNumber}
+              variant="outline"
+              size="sm"
+              className="text-primary hover:text-primary/80"
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              <span>Sửa số</span>
+            </Button>
+          )}
+        </div>
+      ),
+      size: 150,
     },
   ];
 
@@ -267,7 +289,7 @@ export default function PrizesPage() {
 
         {/* Winners Section */}
         {revealedPrizes > 0 && (
-          <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200">
+          <Card className="bg-linear-to-br from-yellow-50 to-orange-50 border-yellow-200">
             <CardHeader>
               <CardTitle className="flex items-center text-gray-900">
                 <Trophy className="w-6 h-6 text-yellow-600 mr-2" />
@@ -291,9 +313,11 @@ export default function PrizesPage() {
                           <p className="text-lg font-bold text-gray-900">
                             {prize.winner?.full_name}
                           </p>
-                          <p className="text-sm text-primary font-semibold mt-1">
-                            Số may mắn: {prize.lucky_number}
-                          </p>
+                          {prize.lucky_number && (
+                            <p className="text-sm text-primary font-semibold mt-1">
+                              Số may mắn: {prize.lucky_number}
+                            </p>
+                          )}
                         </div>
                         <Trophy className="w-8 h-8 text-yellow-500" />
                       </div>
@@ -328,22 +352,6 @@ export default function PrizesPage() {
                 placeholder="Giải Nhất - iPhone 15 Pro Max"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Số May Mắn Trúng Giải
-              </label>
-              <Input
-                type="number"
-                value={newPrize.lucky_number || ""}
-                onChange={(e) =>
-                  setNewPrize({
-                    ...newPrize,
-                    lucky_number: parseInt(e.target.value) || 0,
-                  })
-                }
-                placeholder="123"
-              />
-            </div>
             <DialogFooter>
               <Button
                 type="button"
@@ -354,6 +362,51 @@ export default function PrizesPage() {
               </Button>
               <Button type="submit" disabled={isCreating}>
                 {isCreating ? "Đang xử lý..." : "Thêm"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Update Lucky Number Dialog */}
+      <Dialog
+        open={isUpdateLuckyNumberModalOpen}
+        onOpenChange={setIsUpdateLuckyNumberModalOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cập Nhật Số May Mắn</DialogTitle>
+            <DialogDescription>
+              Nhập số may mắn cho giải thưởng: {selectedPrize?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateLuckyNumber} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Số May Mắn Trúng Giải
+              </label>
+              <Input
+                type="number"
+                value={luckyNumber || ""}
+                onChange={(e) => setLuckyNumber(parseInt(e.target.value) || 0)}
+                placeholder="123"
+                min="1"
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsUpdateLuckyNumberModalOpen(false);
+                  setSelectedPrize(null);
+                  setLuckyNumber(0);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button type="submit" disabled={isUpdatingLuckyNumber}>
+                {isUpdatingLuckyNumber ? "Đang xử lý..." : "Cập nhật"}
               </Button>
             </DialogFooter>
           </form>
