@@ -90,7 +90,6 @@ body {
 }
 
 @keyframes twinkle {
-
   0%,
   100% {
     opacity: 0.3;
@@ -114,4 +113,9 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+main,
+body {
+  background-color: black;
 }
