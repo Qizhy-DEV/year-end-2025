@@ -7,46 +7,48 @@ import { useLogin } from "@/hooks/use-login";
 import { useAuth } from "@/context/auth-context";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const { loginUser } = useAuth();
 
   const { mutateAsync: login } = useLogin();
 
-  // Validate username must end with ".hd"
-  const validateUsername = (uname: string) => {
-    if (!uname.trim()) {
-      setError("Vui lòng nhập username");
+  // Validate fullName
+  const validateFullName = (name: string) => {
+    if (!name.trim()) {
+      setError("Vui lòng nhập họ và tên");
       return false;
     }
-    if (!uname.trim().endsWith(".hd")) {
-      setError("Username phải kết thúc bằng .hd");
+    if (name.trim().length < 2) {
+      setError("Họ và tên phải có ít nhất 2 ký tự");
       return false;
     }
     setError("");
     return true;
   };
 
-  const validatePassword = (password: string) => {
-    if (!password) {
-      setPasswordError("Vui lòng nhập mật khẩu");
-      return false;
-    }
-    setPasswordError("");
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validUsername = validateUsername(username);
-    const validPassword = validatePassword(password);
+    const validFullName = validateFullName(fullName);
 
-    if (validUsername && validPassword) {
-      const res = await login({ username, password });
-      loginUser({ ...res, password });
+    if (validFullName) {
+      try {
+        const res = await login({ fullName: fullName.trim() });
+        loginUser({
+          ID: res.ID,
+          user_login: res.user_login,
+          display_name: res.display_name,
+          lucky: res.lucky,
+          access_token: res.access_token,
+          currentUser: res.currentUser,
+        });
+      } catch (error: any) {
+        setError(
+          error?.response?.data?.message ||
+            "Đăng nhập thất bại. Vui lòng thử lại."
+        );
+      }
     }
   };
 
@@ -90,26 +92,26 @@ export default function Login() {
               Chào Mừng <br /> Xuân Bính Ngọ 2026
             </h1>
             <p className="text-white/80 text-sm">
-              Nhập username để nhận lì xì may mắn
+              Nhập họ và tên để nhận lì xì may mắn
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6 mt-4">
             <div className="space-y-2">
               <label
-                htmlFor="username"
+                htmlFor="fullName"
                 className="block text-white font-medium text-sm"
               >
-                Username
+                Họ và Tên
               </label>
               <input
-                id="username"
+                id="fullName"
                 type="text"
-                value={username}
+                value={fullName}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setUsername(e.target.value)
+                  setFullName(e.target.value)
                 }
-                placeholder="Ví dụ: nguyenvana.hd"
+                placeholder="Ví dụ: Nguyễn Văn A"
                 className="bg-white/20 px-4 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-white/50 rounded-xl h-12 text-base w-full transition-all outline-none hover:border-white/50 focus:ring-2 focus:ring-[#FFD700]/35"
                 autoComplete="off"
                 spellCheck={true}
@@ -118,33 +120,6 @@ export default function Login() {
                 <p className="text-red-300 text-sm flex items-center gap-1">
                   <span>⚠️</span>
                   {error}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="block text-white font-medium text-sm"
-              >
-                Mật khẩu
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
-                placeholder="Nhập mật khẩu"
-                className="bg-white/20 px-4 border border-white/30 text-white placeholder:text-white/50 focus:bg-white/30 focus:border-white/50 rounded-xl h-12 text-base w-full transition-all outline-none hover:border-white/50 focus:ring-2 focus:ring-[#FFD700]/35"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              {passwordError && (
-                <p className="text-red-300 text-sm flex items-center gap-1">
-                  <span>⚠️</span>
-                  {passwordError}
                 </p>
               )}
             </div>
@@ -158,13 +133,13 @@ export default function Login() {
 
             <div className="mt-6 pt-6 border-t border-white/20">
               <p className="text-white/60 text-xs leading-relaxed space-y-1">
+                <span className="block">📝 Nhập đúng họ và tên của bạn</span>
                 <span className="block">
-                  📝 Username phải kết thúc bằng <b>.hd</b>
+                  🚫 Không được nhập tên của người khác
                 </span>
                 <span className="block">
-                  🚫 Không được nhập username của người khác
+                  ✨ Hệ thống sẽ tự động xác nhận danh tính
                 </span>
-                <span className="block">🔒 Mật khẩu từ 1 ký tự trở lên</span>
               </p>
             </div>
           </form>

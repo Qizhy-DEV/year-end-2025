@@ -1,4 +1,4 @@
 export const API_PATHS = {
-  login: "/login",
+  login: "/users/login",
   getLuckyNumber: "/get_lucky_money",
 };

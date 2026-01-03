@@ -3,10 +3,18 @@ import { API_PATHS } from "./path";
 
 export type LoginResponse = {
   success: boolean;
-  ID: number;
+  access_token: string;
+  ID: string;
   user_login: string;
   display_name: string;
   lucky: number;
+  currentUser: {
+    _id: string;
+    full_name: string;
+    lucky_number: number;
+    is_checked_in: boolean;
+    role: string;
+  };
 };
 
 type LuckyNumberResponse = {
@@ -14,15 +22,11 @@ type LuckyNumberResponse = {
 };
 
 export const login = async (
-  username: string,
-  password: string
+  fullName: string
 ): Promise<LoginResponse> => {
   return (
-    await axiosClient.get<LoginResponse>(API_PATHS.login, {
-      params: {
-        user_name: username,
-        password,
-      },
+    await axiosClient.post<LoginResponse>(API_PATHS.login, {
+      full_name: fullName,
     })
   ).data;
 };

@@ -9,11 +9,18 @@ import { getAuthData, setAuthData, removeAuthData } from "@/libs/token";
 import { useLogin } from "@/hooks/use-login";
 
 type AuthUser = {
-  ID: number;
+  ID: string;
   user_login: string;
   display_name: string;
-  password: string;
   lucky: number;
+  access_token?: string;
+  currentUser?: {
+    _id: string;
+    full_name: string;
+    lucky_number: number;
+    is_checked_in: boolean;
+    role: string;
+  };
   avatar?: string;
   email?: string;
   admin?: boolean;
@@ -34,24 +41,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const data = getAuthData();
     return data;
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (user) {
+      if (user && user.display_name) {
         setIsLoading(true);
-        const res = await login({
-          username: user.user_login,
-          password: user.password,
-        });
-        if (res.lucky) {
-          setAuthData({ ...user, lucky: res.lucky });
+        try {
+          const res = await login({
+            fullName: user.display_name,
+          });
+          if (res.lucky) {
+            const updatedUser = {
+              ...user,
+              lucky: res.lucky,
+              access_token: res.access_token,
+              currentUser: res.currentUser,
+            };
+            setUser(updatedUser);
+            setAuthData(updatedUser);
+          }
+        } catch (error) {
+          // Handle error silently or show message
+          console.error("Failed to refresh user data:", error);
         }
         setIsLoading(false);
       }
     };
     fetchUser();
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loginUser = (userData: AuthUser) => {
     setUser(userData);
